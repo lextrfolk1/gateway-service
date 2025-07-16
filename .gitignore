@@ -1,0 +1,11 @@
+# Default ignored files
+/shelf/
+/.idea/workspace.xml
+
+# Ignore build output directories
+/target/
+/bin/
+/build/
+/.idea/
+
+.idea

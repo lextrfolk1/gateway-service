@@ -1,0 +1,13 @@
+server:
+  port: 8081
+
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: testing-service
+          uri: http://localhost:9999
+          predicates:
+            - Path=/**
+          filters:
+            - RewritePath=/proxy/(?<segment>.*), /${segment}
