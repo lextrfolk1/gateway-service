@@ -4,10 +4,32 @@ server:
 spring:
   cloud:
     gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - OPTIONS
+              - PUT
+              - DELETE
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+
       routes:
-        - id: testing-service
-          uri: http://testing-service
+        - id: api-route
+          uri: http://localhost:9999
           predicates:
-            - Path=/**
+            - Path=/proxy/api/**
           filters:
-            - RewritePath=/proxy/(?<segment>.*), /${segment}
+            - RewritePath=/proxy/api/(?<segment>.*), /${segment}
+
+        - id: websocket-route
+          uri: ws://localhost:9999
+          predicates:
+            - Path=/proxy/ws/**
+          filters:
+            - RewritePath=/proxy/ws/(?<segment>.*), /${segment}
