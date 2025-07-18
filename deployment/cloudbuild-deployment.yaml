@@ -1,0 +1,98 @@
+# Command:
+# gcloud builds submit --config cloudbuild-deployment.yaml \
+#   --substitutions=_SERVICE_NAME=testing-service,_REPO_URL=https://github.com/your-org/your-repo.git,_GCP_PROJECT_ID=tejalf-project,_REGION=us-central1,_CLUSTER_NAME=my-cluster-name,_REPO_PATH=tejalf-repo
+
+substitutions:
+  _SERVICE_NAME: "testing-service"
+  _REPO_URL: "https://github.com/your-org/your-repo.git"
+  _GCP_PROJECT_ID: "tejalf-project"
+  _REGION: "us-central1"
+  _CLUSTER_NAME: "tejalf-cluster"
+  _REPO_PATH: "tejalf-repo"
+
+steps:
+  # Step 1: Force clone or pull from the GitHub repo
+  - name: 'gcr.io/cloud-builders/git'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        set -e
+        if [ -d "${_SERVICE_NAME}/.git" ]; then
+          echo "Repo exists. Pulling latest changes..."
+          cd "${_SERVICE_NAME}"
+          git fetch origin main
+          git reset --hard origin/mainō
+        else
+          echo "Cloning fresh copy of the repo..."
+          rm -rf "${_SERVICE_NAME}"
+          git clone "${_REPO_URL}" "${_SERVICE_NAME}"
+          cd "${_SERVICE_NAME}"
+        fi
+
+  # Step 1.5: Print working directory (debug)
+  - name: 'gcr.io/cloud-builders/bash'
+    entrypoint: 'bash'
+    dir: '${_SERVICE_NAME}'
+    args:
+      - '-c'
+      - |
+        echo "🔍 Current working directory before docker build:"
+        pwd
+        echo "📁 Files:"
+        ls -la
+      
+
+      # Step 2: Build Docker image from cloned repo
+  - name: 'gcr.io/cloud-builders/docker'
+    dir: '${_SERVICE_NAME}'
+    args: [
+      'build',
+      '-t',
+      '${_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_REPO_PATH}/${_SERVICE_NAME}:latest',
+      '${_SERVICE_NAME}'
+    ]
+
+  # Step 3: Push Docker image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'push',
+      '${_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_REPO_PATH}/${_SERVICE_NAME}:latest'
+    ]
+
+  # Step 4: Configure kubectl for GKE
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud container clusters get-credentials "${_CLUSTER_NAME}" \
+        --region "${_REGION}" \
+        --project "${_GCP_PROJECT_ID}"
+
+  # Step 5: Delete existing deployment (ignore error if not found)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'kubectl delete deployment ${_SERVICE_NAME} || true'
+
+  # Step 6: Delete existing service (ignore error if not found)
+  - name: 'gcr.io/cloud-builders/kubectl'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'kubectl delete service ${_SERVICE_NAME} || true'
+
+  # Step 7: Apply deployment manifest
+  - name: 'gcr.io/cloud-builders/kubectl'
+    dir: '${_SERVICE_NAME}'
+    args: [ 'apply', '-f', 'deployment.yaml' ]
+
+  # Step 8: Apply service manifest
+  - name: 'gcr.io/cloud-builders/kubectl'
+    dir: '${_SERVICE_NAME}'
+    args: [ 'apply', '-f', 'service.yml' ]
+
+images:
+  - '${_REGION}-docker.pkg.dev/${_GCP_PROJECT_ID}/${_REPO_PATH}/${_SERVICE_NAME}:latest'
