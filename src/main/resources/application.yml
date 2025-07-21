@@ -29,14 +29,14 @@ spring:
 
       routes:
         - id: api-route
-          uri: http://localhost:9999
+          uri: http://testing-service
           predicates:
             - Path=/proxy/**
           filters:
             - RewritePath=/proxy/(?<segment>.*), /${segment}
 
         - id: websocket-route
-          uri: http://localhost:9999
+          uri: http://testing-service
           predicates:
             - Path=/proxy/ws/**
           filters:
