@@ -1,3 +1,5 @@
+
+
 FROM maven:3.9.6-eclipse-temurin-17-alpine AS build
 
 WORKDIR /build
@@ -16,6 +18,6 @@ WORKDIR /gateway-service
 
 COPY --from=build /build/target/*.jar gateway-service.jar
 
-EXPOSE 8053
+EXPOSE 8081
 
 ENTRYPOINT ["java", "-jar", "gateway-service.jar"]
