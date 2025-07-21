@@ -1,6 +1,14 @@
 server:
   port: 8081
 
+# Swagger aggregator in GCP
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: testing-service
+        url: /proxy/v3/api-docs
+
 spring:
   cloud:
     gateway:
@@ -23,9 +31,9 @@ spring:
         - id: api-route
           uri: http://localhost:9999
           predicates:
-            - Path=/proxy/api/**
+            - Path=/proxy/**
           filters:
-            - RewritePath=/proxy/api/(?<segment>.*), /${segment}
+            - RewritePath=/proxy/(?<segment>.*), /${segment}
 
         - id: websocket-route
           uri: http://localhost:9999
