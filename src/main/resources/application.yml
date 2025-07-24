@@ -3,6 +3,7 @@ server:
 
 # Swagger aggregator in GCP
 springdoc:
+  override-with-gateway-url: true
   swagger-ui:
     path: /swagger-ui.html
     urls:
