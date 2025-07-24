@@ -1,7 +1,6 @@
 server:
   port: 8081
 
-# Swagger aggregator in GCP
 springdoc:
   override-with-gateway-url: true
   swagger-ui:
@@ -34,6 +33,7 @@ spring:
           predicates:
             - Path=/proxy/**
           filters:
+            - AddRequestHeader=X-Forwarded-Prefix, /proxy
             - RewritePath=/proxy/(?<segment>.*), /${segment}
 
         - id: websocket-route
