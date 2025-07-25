@@ -33,7 +33,6 @@ spring:
           predicates:
             - Path=/proxy/**
           filters:
-            - AddRequestHeader=X-Forwarded-Prefix, /proxy
             - RewritePath=/proxy/(?<segment>.*), /${segment}
 
         - id: websocket-route
